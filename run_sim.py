@@ -196,7 +196,7 @@ def main():
     p.add_argument("--latency", type=float, default=50.0)
     p.add_argument("--node-trust", type=float, default=1.0)
     p.add_argument("--simulate-sdn", action="store_true")
-    p.add_argument("--jitter", type=float, default=0.05)
+    p.add_argument("--jitter", type=float, default=0.0)
     p.add_argument("--seed", type=int, default=42)
     args = p.parse_args()
 

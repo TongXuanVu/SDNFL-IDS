@@ -50,6 +50,7 @@ class SDNControllerClient(fl.client.NumPyClient):
         self.device = device
         self.lr = lr
         self.jitter = jitter
+        self.seed = seed
         self.rng = np.random.default_rng(seed + client_id)
 
         # --- trang thai controller ---
@@ -69,11 +70,19 @@ class SDNControllerClient(fl.client.NumPyClient):
         self.model = build_model(arch, NUM_GLOBAL_CLASSES, dropout, hidden, layers).to(device)
         self.criterion = FocalLoss(alpha=C.make_focal_alpha(y).to(device), gamma=2.0)
 
-    def sample_controller_state(self):
-        """Trang thai o round hien tai (co dao dong nhe quanh gia tri co so)."""
+    def sample_controller_state(self, rnd=0):
+        """Trang thai o round hien tai (co dao dong nhe quanh gia tri co so).
+
+        Phai gieo theo (client, ROUND). Trong che do simulation cua Flower,
+        doi tuong client bi TAO LAI moi round voi cung seed, nen neu dung
+        self.rng thi moi round deu boc ra dung mot so — jitter tro thanh VO
+        TAC DUNG mot cach am tham (do bang thuc nghiem: trong so round 1 va
+        round 2 giong nhau den 0.0%).
+        """
         if self.jitter <= 0:
             return self.throughput, self.latency, self.node_trust
-        f = lambda v: float(max(1e-3, v * (1.0 + self.rng.normal(0, self.jitter))))
+        r = np.random.default_rng(self.seed + self.cid * 100_003 + rnd)
+        f = lambda v: float(max(1e-3, v * (1.0 + r.normal(0, self.jitter))))
         return f(self.throughput), f(self.latency), min(1.0, f(self.node_trust))
 
     # ---- Flower API -------------------------------------------------------
@@ -106,7 +115,7 @@ class SDNControllerClient(fl.client.NumPyClient):
                 seen += yb.numel()
 
         avg = total_loss / max(n_batches, 1)
-        thr, lat, trust = self.sample_controller_state()
+        thr, lat, trust = self.sample_controller_state(rnd)
         logger.info(f"[Controller {self.cid}][Round {rnd}] n={self.n_samples} "
                     f"loss={avg:.4f} acc={correct / max(seen, 1):.4f} | "
                     f"thr={thr:.1f} lat={lat:.1f} trust={trust:.3f}")
@@ -142,8 +151,9 @@ def main():
     p.add_argument("--node-trust", type=float, default=1.0, help="0..1")
     p.add_argument("--simulate-sdn", action="store_true",
                    help="Sinh throughput/latency/trust ngau nhien theo seed")
-    p.add_argument("--jitter", type=float, default=0.05,
-                   help="Do dao dong tuong doi moi round (0 = tat)")
+    p.add_argument("--jitter", type=float, default=0.0,
+                   help="Dao dong trang thai controller moi round. 0 = giu co dinh "
+                        "(mac dinh): trong so on dinh, tai lap duoc")
     p.add_argument("--task", type=int, default=None, choices=range(C.NUM_TASKS))
     p.add_argument("--seed", type=int, default=42)
     args = p.parse_args()
