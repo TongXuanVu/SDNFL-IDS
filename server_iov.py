@@ -107,6 +107,26 @@ class TrustWeightedFedAvg(fl.server.strategy.FedAvg):
 
     def _weights(self, results, flats, rnd) -> np.ndarray:
         n = np.array([r.num_examples for _, r in results], float)
+        if self.weighting == "paper":
+            # Eq. (3) cua bai:  GM(r+1) = 1/C * SUM_i W_i * LM_i
+            # "the Cloud server aggregates the local models based on weights
+            #  decided by the current state of SDN controllers (e.g, throughput
+            #  and latency)"  -> W CHI phu thuoc throughput/latency, KHONG co
+            # so mau, KHONG co tin cay. Day la khac biet chinh so voi FedAvg.
+            #
+            # CANH BAO: neu lay dung chu "1/C" voi W_i <= 1 thi model TEO dan —
+            # do lon nhan ~mean(W) moi round, W=[0.8,0.5] con 1.3% sau 10 round.
+            # Bai bao dat F1 > 95%% nen chac chan W da duoc chuan hoa. O day ta
+            # chia W cho trung binh cua no (mean(W)=1) roi moi ap 1/C — luc do
+            # 1/C * SUM(W_i * LM_i) tro thanh trung binh co trong so dung nghia.
+            q = self._quality(results)
+            beh = np.ones_like(n)
+            node = np.ones_like(n)
+            w = np.clip(q, 1e-9, None)
+            w = w * (len(w) / w.sum())          # mean(W) = 1
+            w = w / len(w)                       # nhan 1/C  ->  tong = 1
+            self._log_weights(results, rnd, n, node, q, beh, w)
+            return w
         if self.weighting == "samples":
             w = n.copy()
             q = np.ones_like(n)
@@ -123,7 +143,10 @@ class TrustWeightedFedAvg(fl.server.strategy.FedAvg):
                 t = np.clip(node * beh, 1e-6, None)
             w = (n ** self.alpha) * (q ** self.beta) * (t ** self.gamma)
         w = w / w.sum()
+        self._log_weights(results, rnd, n, node, q, beh, w)
+        return w
 
+    def _log_weights(self, results, rnd, n, node, q, beh, w):
         if self.weight_log:
             with open(self.weight_log, "a", newline="", encoding="utf-8") as f:
                 wr = csv.writer(f)
@@ -134,6 +157,7 @@ class TrustWeightedFedAvg(fl.server.strategy.FedAvg):
                                  round(r.metrics.get("latency_ms", 0.0), 3),
                                  round(float(node[i]), 4), round(float(q[i]), 4),
                                  round(float(beh[i]), 4), round(float(w[i]), 6)])
+
         return w
 
     # ---- Flower API -------------------------------------------------------
@@ -236,7 +260,12 @@ def main():
     p.add_argument("--lr", type=float, default=1e-3)
     p.add_argument("--dropout", type=float, default=0.15)
     # --- trong so tong hop ---
-    p.add_argument("--weighting", choices=["trust", "state", "samples"], default="trust")
+    p.add_argument("--weighting",
+                   choices=["paper", "trust", "state", "samples"], default="trust",
+                   help="paper  = Eq.(3) cua bai: W chi tu throughput/latency, "
+                        "khong dung so mau (dung bai nhat). "
+                        "trust  = them so mau va tin cay hanh vi (mo rong cua ta). "
+                        "samples= FedAvg chuan (doi chung)")
     p.add_argument("--alpha", type=float, default=1.0, help="Mu cua so mau")
     p.add_argument("--beta", type=float, default=1.0, help="Mu cua chat luong controller")
     p.add_argument("--gamma", type=float, default=1.0, help="Mu cua tin cay")

@@ -183,7 +183,8 @@ def main():
     p.add_argument("--arch", choices=["cnn", "rnn"], default="cnn")
     p.add_argument("--hidden", type=int, default=64)
     p.add_argument("--layers", type=int, default=2)
-    p.add_argument("--weighting", choices=["trust", "state", "samples"], default="trust")
+    p.add_argument("--weighting",
+                   choices=["paper", "trust", "state", "samples"], default="trust")
     p.add_argument("--alpha", type=float, default=1.0)
     p.add_argument("--beta", type=float, default=1.0)
     p.add_argument("--gamma", type=float, default=1.0)
