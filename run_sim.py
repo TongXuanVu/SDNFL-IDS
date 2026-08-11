@@ -124,20 +124,23 @@ def make_client_fn(ids, args, task, device):
     def client_fn(ctx):
         pid = int(ctx.node_config.get("partition-id", 0))
         cid = ids[pid % len(ids)]
+        # Ray chi cho actor thay GPU khi client_resources co num_gpus > 0.
+        # Neu khong thay thi PHAI dung CPU, khong duoc truyen thang "cuda".
+        dev = device if torch.cuda.is_available() else "cpu"
         if IS_P2:
             atk = args.attackers.get(cid, "none")
-            c = ClientCls(cid, args.data_dir, device, args.max_samples,
+            c = ClientCls(cid, args.data_dir, dev, args.max_samples,
                           args.batch_size, task, args.lr, args.dropout,
                           tuple(args.width), args.grid_size, args.spline_order,
                           atk, args.attack_scale, args.seed)
         elif IS_P4:
-            c = ClientCls(cid, args.data_dir, device, args.max_samples,
+            c = ClientCls(cid, args.data_dir, dev, args.max_samples,
                           args.batch_size, task, args.lr, args.dropout,
                           args.arch, args.hidden, args.layers,
                           args.throughput, args.latency, args.node_trust,
                           args.simulate_sdn, args.jitter, args.seed)
         else:
-            c = ClientCls(cid, args.data_dir, device, args.max_samples,
+            c = ClientCls(cid, args.data_dir, dev, args.max_samples,
                           args.batch_size, task, args.lr, args.dropout)
         return c.to_client()
     return client_fn
@@ -165,7 +168,7 @@ def main():
     p.add_argument("--actor-cpus", type=float, default=1.0,
                    help="CPU cho MOI client song song. Tang len de giam so client "
                         "chay dong thoi neu thieu RAM")
-    p.add_argument("--actor-gpus", type=float, default=0.0,
+    p.add_argument("--actor-gpus", type=float, default=-1.0,
                    help="Ty le GPU moi client, vd 0.1 = toi da 10 client/GPU")
     # --- rieng P2 (FedIoV) ---
     p.add_argument("--width", type=int, nargs=2, default=[16, 32])
@@ -196,6 +199,17 @@ def main():
     p.add_argument("--jitter", type=float, default=0.05)
     p.add_argument("--seed", type=int, default=42)
     args = p.parse_args()
+
+    # actor_gpus < 0 = tu tinh: chia deu GPU cho so actor chay song song.
+    if args.actor_gpus < 0:
+        n_gpu = torch.cuda.device_count()
+        if n_gpu > 0:
+            song_song = max(1, int(os.cpu_count() / max(args.actor_cpus, 1e-9)))
+            args.actor_gpus = round(n_gpu / song_song, 4)
+        else:
+            args.actor_gpus = 0.0
+    logger.info(f"GPU cho moi actor: {args.actor_gpus} "
+                f"({torch.cuda.device_count()} GPU / {os.cpu_count()} CPU)")
 
     os.makedirs(args.out_dir, exist_ok=True)
     sfx_arch = f"_{args.arch}" if IS_P4 else ""
