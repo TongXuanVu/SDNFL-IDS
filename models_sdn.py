@@ -29,8 +29,11 @@ class RNN1D_IDS(nn.Module):
     (B,31) -> (B,31,1) -> GRU(hidden, 2 lop, bidirectional) -> trang thai cuoi -> FC
     """
 
-    def __init__(self, input_len=INPUT_LEN, num_classes=NUM_GLOBAL_CLASSES,
+    def __init__(self, input_len=None, num_classes=None,
                  hidden=64, layers=2, dropout=0.15, bidirectional=True):
+        # None -> lay LUC GOI; tham so mac dinh bi chot luc `def`
+        input_len = INPUT_LEN if input_len is None else input_len
+        num_classes = NUM_GLOBAL_CLASSES if num_classes is None else num_classes
         super().__init__()
         self.input_len = input_len
         self.num_classes = num_classes
@@ -53,8 +56,10 @@ class RNN1D_IDS(nn.Module):
         return self.classifier(self.embed(x))
 
 
-def build_model(arch: str, num_classes=NUM_GLOBAL_CLASSES, dropout=0.15,
+def build_model(arch: str, num_classes=None, dropout=0.15,
                 hidden=64, layers=2):
+    # None -> lay LUC GOI; tham so mac dinh bi chot luc `def`
+    num_classes = NUM_GLOBAL_CLASSES if num_classes is None else num_classes
     arch = arch.lower()
     if arch == "cnn":
         return CNN1D_IDS(INPUT_LEN, num_classes, dropout)
