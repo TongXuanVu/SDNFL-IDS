@@ -38,7 +38,7 @@ if _ROOT not in sys.path:
     sys.path.insert(0, _ROOT)
 
 import common as C                               # noqa: E402
-from models_sdn import build_model, FocalLoss, NUM_GLOBAL_CLASSES  # noqa: E402
+from models_sdn import build_model, FocalLoss  # noqa: E402
 
 logger = logging.getLogger(__name__)
 
@@ -70,7 +70,7 @@ class SDNControllerClient(fl.client.NumPyClient):
         self.loader = C.make_loader(x, y, batch_size, shuffle=True)
         self.n_samples = len(y)
 
-        self.model = build_model(arch, NUM_GLOBAL_CLASSES, dropout, hidden, layers).to(device)
+        self.model = build_model(arch, C.NUM_GLOBAL_CLASSES, dropout, hidden, layers).to(device)
         self.criterion = FocalLoss(alpha=C.make_focal_alpha(y).to(device), gamma=2.0)
 
     def sample_controller_state(self, rnd=0):
@@ -157,11 +157,14 @@ def main():
     p.add_argument("--jitter", type=float, default=0.0,
                    help="Dao dong trang thai controller moi round. 0 = giu co dinh "
                         "(mac dinh): trong so on dinh, tai lap duoc")
-    p.add_argument("--task", type=int, default=None, choices=range(C.NUM_TASKS))
+    p.add_argument("--task", type=int, default=None)
     p.add_argument("--seed", type=int, default=42)
     args = p.parse_args()
 
     C.setup_logging()
+    C.init_dataset(args.data_dir)
+    if args.task is not None and not 0 <= args.task < C.NUM_TASKS:
+        p.error(f"--task phai trong khoang 0..{C.NUM_TASKS - 1}")
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     client = SDNControllerClient(
         args.client_id, args.data_dir, device, args.max_samples, args.batch_size,

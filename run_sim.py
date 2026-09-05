@@ -89,18 +89,17 @@ if IS_P2:
                           kw.get("spline_order", 3))
 elif IS_P4:
     from client_iov import SDNControllerClient as ClientCls   # noqa: E402
-    from models_sdn import build_model, NUM_GLOBAL_CLASSES    # noqa: E402
+    from models_sdn import build_model                    # noqa: E402
 else:
     from client_iov import VanFedClient as ClientCls          # noqa: E402
-    from model_cnn1d import (CNN1D_IDS, INPUT_LEN,            # noqa: E402
-                             NUM_GLOBAL_CLASSES)
+    from model_cnn1d import CNN1D_IDS                       # noqa: E402
 
     def build_model(arch, num_classes, dropout, hidden=64, layers=2):
-        return CNN1D_IDS(INPUT_LEN, num_classes, dropout)
+        return CNN1D_IDS(C.INPUT_LEN, num_classes, dropout)
 
 
 def clients_with_data(data_dir, client_ids, task):
-    fed = os.path.join(data_dir, "federated_data")
+    fed = os.path.join(data_dir, C.FED_SUBDIR)
     ok = []
     for cid in client_ids:
         if task is None:
@@ -257,11 +256,11 @@ def main():
 
     args.attackers = {c: args.attack for c in args.attack_ids}
     if IS_P2:
-        model = build_model(args.arch, NUM_GLOBAL_CLASSES, args.dropout,
+        model = build_model(args.arch, C.NUM_GLOBAL_CLASSES, args.dropout,
                             width=tuple(args.width), grid_size=args.grid_size,
                             spline_order=args.spline_order).to(device)
     else:
-        model = build_model(args.arch, NUM_GLOBAL_CLASSES, args.dropout,
+        model = build_model(args.arch, C.NUM_GLOBAL_CLASSES, args.dropout,
                             args.hidden, args.layers).to(device)
     ckpt_dir = os.path.join(args.out_dir, f"checkpoints{sfx_arch}")
 
