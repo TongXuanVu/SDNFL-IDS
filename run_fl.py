@@ -58,15 +58,18 @@ NUM_TASKS = 5
 #   - repo doc lap         : server_iov.py nam ngay canh file nay -> tu nhan dien
 STANDALONE = os.path.exists(os.path.join(ROOT, "server_iov.py"))
 
+if STANDALONE:
+    import common as C
+
 
 def clients_with_data(data_dir, client_ids, task):
     """Loc ra nhung client co file .pt cho task nay (task=None -> can it nhat 1 file)."""
-    fed = os.path.join(data_dir, "federated_data")
+    fed = os.path.join(data_dir, C.FED_SUBDIR)
     ok = []
     for cid in client_ids:
         if task is None:
             has = (any(os.path.exists(os.path.join(fed, f"client_{cid}_task_{t}.pt"))
-                       for t in range(1, NUM_TASKS + 1))
+                       for t in range(1, C.NUM_TASKS + 1))
                    or os.path.exists(os.path.join(fed, f"client_{cid}.pt")))
         else:
             has = os.path.exists(os.path.join(fed, f"client_{cid}_task_{task + 1}.pt"))
@@ -278,8 +281,11 @@ def main():
     args.data_dir = os.path.abspath(args.data_dir)
     os.makedirs(args.out_dir, exist_ok=True)
 
-    if not os.path.isdir(os.path.join(args.data_dir, "federated_data")):
-        sys.exit(f"Khong thay {args.data_dir}/federated_data — sai --data-dir?")
+    if STANDALONE:
+        C.init_dataset(args.data_dir)
+        NUM_TASKS = C.NUM_TASKS
+    if not os.path.isdir(os.path.join(args.data_dir, C.FED_SUBDIR)):
+        sys.exit(f"Khong thay {args.data_dir}/{C.FED_SUBDIR} — sai --data-dir?")
 
     if args.tasks.strip().lower() == "none":
         tasks = [None]
