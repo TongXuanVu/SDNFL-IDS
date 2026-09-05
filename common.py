@@ -638,8 +638,15 @@ def save_checkpoint(ckpt_dir: str, rnd: int, state_dict, extra: Optional[Dict] =
     if extra:
         payload.update(extra)
     path = os.path.join(ckpt_dir, f"round_{rnd:03d}.pth")
-    torch.save(payload, path)
-    torch.save(payload, os.path.join(ckpt_dir, "latest.pth"))
+    # Replace each artifact atomically so an interrupted write cannot leave a
+    # corrupt latest checkpoint for the next resume.
+    tmp_path = f"{path}.tmp.{os.getpid()}"
+    latest = os.path.join(ckpt_dir, "latest.pth")
+    latest_tmp = f"{latest}.tmp.{os.getpid()}"
+    torch.save(payload, tmp_path)
+    os.replace(tmp_path, path)
+    torch.save(payload, latest_tmp)
+    os.replace(latest_tmp, latest)
     logger.info(f"[Round {rnd}] luu checkpoint -> {path}")
     return path
 

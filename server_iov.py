@@ -179,6 +179,9 @@ class TrustWeightedFedAvg(fl.server.strategy.FedAvg):
 
         agg = [sum(w[i] * all_nd[i][j] for i in range(len(all_nd)))
                for j in range(len(all_nd[0]))]
+        # Keep the server-side model in sync with the aggregate. This is the
+        # model serialized for the architecture-specific resume checkpoint.
+        self.model.load_state_dict(C.ndarrays_to_state_dict(self.model, agg))
 
         losses = np.array([r.metrics.get("train_loss", 0.0) for _, r in results])
         n = np.array([r.num_examples for _, r in results], float)
