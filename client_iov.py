@@ -33,6 +33,9 @@ import torch.optim as optim
 _P1 = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "P1-VANFED-IDS")
 if os.path.isdir(_P1) and _P1 not in sys.path:   # repo doc lap: khong co thu muc nay
     sys.path.insert(0, _P1)
+_ROOT = os.path.dirname(os.path.abspath(__file__))
+if _ROOT not in sys.path:
+    sys.path.insert(0, _ROOT)
 
 import common as C                               # noqa: E402
 from models_sdn import build_model, FocalLoss, NUM_GLOBAL_CLASSES  # noqa: E402

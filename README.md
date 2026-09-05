@@ -34,6 +34,18 @@ DATA = "/kaggle/input/iov-100client"      # Kaggle Dataset chứa federated_data
 !cd {CODE} && python run_fl.py --data-dir {DATA} --clients 10 --rounds 20
 ```
 
+Flower simulation (Ray), dùng khi muốn chạy nhiều client trong một pool actor:
+
+```python
+!cd {CODE} && python run_sim.py --data-dir {DATA} --clients 10 --rounds 20 --tasks 0
+```
+
+Sau mỗi round, kiểm tra checkpoint bằng `os.path.exists` với đường dẫn
+`<OUT>/checkpoints_cnn/latest.pth` (hoặc `<OUT>/checkpoints/latest.pth` nếu
+chạy kiến trúc mặc định), và đọc trường `round` trong file bằng
+`torch.load(..., map_location="cpu")`. Metrics tương ứng nằm ở
+`<OUT>/metrics_cnn_task0.csv`; số dòng dữ liệu phải tăng sau mỗi round.
+
 Kaggle đã có sẵn torch / numpy / scikit-learn / matplotlib, chỉ thiếu `flwr`.
 Repo này không phụ thuộc ba repo kia — không cần clone thêm gì.
 

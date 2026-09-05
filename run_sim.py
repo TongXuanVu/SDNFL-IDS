@@ -55,6 +55,18 @@ IS_P2 = os.path.exists(os.path.join(ROOT, "model_kanconv.py"))  # FedIoV
 IS_P3 = os.path.exists(os.path.join(ROOT, "generator.py"))      # IoVFD
 logger = logging.getLogger(__name__)
 
+
+def _ray_init_args():
+    """Keep Ray actors in this checkout so top-level repo modules are importable."""
+    return {"runtime_env": {"working_dir": ROOT}}
+
+
+def _ensure_repo_importable():
+    """Fallback for Ray/Flower versions which do not apply working_dir to sys.path."""
+    if ROOT not in sys.path:
+        sys.path.insert(0, ROOT)
+
+
 if IS_P3:
     sys.exit(
         "run_sim.py KHONG dung duoc cho IoVFD (P3).\n\n"
@@ -122,6 +134,7 @@ def rounds_done(out_dir, task):
 def make_client_fn(ids, args, task, device):
     """partition-id cua Ray -> client id that -> doi tuong client cua repo."""
     def client_fn(ctx):
+        _ensure_repo_importable()
         # Ray tao actor trong TIEN TRINH RIENG — o do common.py duoc import lai
         # voi gia tri mac dinh cua CICIoV (13 lop, 31 dac trung). Khong ap lai
         # ho so thi client se dung model sai kich thuoc tren bo IoT ma khong
@@ -322,6 +335,7 @@ def main():
             strategy=strategy,
             client_resources={"num_cpus": args.actor_cpus,
                               "num_gpus": args.actor_gpus},
+            ray_init_args=_ray_init_args(),
         )
         start_round += remaining
 
