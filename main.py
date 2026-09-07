@@ -90,6 +90,7 @@ def main():
         "--seed", str(a.seed),
         "--arch", a.arch,
         "--weighting", a.weighting,
+        "--fed-subdir", a.fed_subdir,
         "--simulate-sdn",
         "--actor-gpus", str(a.actor_gpus),
         "--actor-cpus", str(a.actor_cpus),

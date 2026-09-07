@@ -182,6 +182,10 @@ def main():
     p.add_argument("--fraction-fit", type=float, default=1.0)
     p.add_argument("--cm-every", type=int, default=0)
     p.add_argument("--restart", action="store_true")
+    p.add_argument("--fed-subdir", type=str, default="federated_data",
+                   help="Thu muc con chua shard: federated_data | "
+                        "federated_data_fewshot | federated_data_10shot. "
+                        "Bo IoT long khac, tim_fed_subdir() tu doi duong dan")
     p.add_argument("--actor-cpus", type=float, default=1.0,
                    help="CPU cho MOI client song song. Tang len de giam so client "
                         "chay dong thoi neu thieu RAM")
@@ -234,7 +238,14 @@ def main():
     # Tu do ho so bo du lieu (so lop / dac trung / task / remap nhan).
     # Phai dat SAU setup_logging, khong thi dong log quan trong nhat —
     # cho biet dang chay IoV hay IoT — khong vao duoc file log.
-    args.profile = C.init_dataset(args.data_dir)
+    # Phai goi TRUOC init_dataset: clients_with_data() va load_client_data()
+    # deu doc C.FED_SUBDIR. Truoc day P4 khai bao --fed_subdir o main.py nhung
+    # KHONG ai truyen xuong va run_sim khong co co nay -> moi bien the deu doc
+    # 'federated_data' (voi IoT la '100client', tuc FULL). Do duoc: thu muc
+    # 100clientiot/1%/ co task0=47 client va chay lai task 0, trong khi P3
+    # cung cau hinh cho task0=0 va bo qua dung.
+    C.set_fed_subdir(args.fed_subdir)
+    args.profile = C.init_dataset(args.data_dir, args.fed_subdir)
     torch.manual_seed(args.seed)
     np.random.seed(args.seed)
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
