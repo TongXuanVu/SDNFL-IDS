@@ -9,8 +9,8 @@ _thu/
 
 # Trang thai de resume qua GitHub (xem resume_state.py). Chi latest.pth +
 # metrics CSV + ket qua, KHONG co checkpoint tung round.
-!logs/resume/
-!logs/resume/**
+!logs/resume*/
+!logs/resume*/**
 
 # du lieu (khong bao gio commit)
 *.pt
