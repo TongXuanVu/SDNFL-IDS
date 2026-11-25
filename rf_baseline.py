@@ -98,7 +98,7 @@ def main():
     p.add_argument("--test-samples", type=int, default=1_000_000)
     p.add_argument("--task", type=int, default=None, choices=range(C.NUM_TASKS))
     p.add_argument("--n-jobs", type=int, default=-1)
-    p.add_argument("--seed", type=int, default=42)
+    p.add_argument("--seed", type=int, default=2021)
     args = p.parse_args()
 
     os.makedirs(args.out_dir, exist_ok=True)

@@ -218,7 +218,7 @@ def main():
     p.add_argument("--node-trust", type=float, default=1.0)
     p.add_argument("--simulate-sdn", action="store_true")
     p.add_argument("--jitter", type=float, default=0.0)
-    p.add_argument("--seed", type=int, default=42)
+    p.add_argument("--seed", type=int, default=2021)
     args = p.parse_args()
 
     # actor_gpus < 0 = tu tinh: chia deu GPU cho so actor chay song song.
@@ -248,6 +248,7 @@ def main():
     args.profile = C.init_dataset(args.data_dir, args.fed_subdir)
     torch.manual_seed(args.seed)
     np.random.seed(args.seed)
+    logger.info(f"[SEED] {args.seed}")
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     if args.tasks.strip().lower() == "none":

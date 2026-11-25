@@ -63,7 +63,7 @@ def main():
                             "federated_data_10shot"])
     p.add_argument("--actor_gpus", type=float, default=-1.0)
     p.add_argument("--actor_cpus", type=float, default=1.0)
-    p.add_argument("--seed", type=int, default=42)
+    p.add_argument("--seed", type=int, default=2021)
     a = p.parse_args()
 
     if a.paper_hparams:                      # Bang 1 cua bai

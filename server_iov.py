@@ -282,7 +282,7 @@ def main():
     p.add_argument("--ckpt", type=str, default=None)
     p.add_argument("--cm-every", type=int, default=0,
                    help="Ghi confusion matrix moi N round (0 = chi cuoi task)")
-    p.add_argument("--seed", type=int, default=42)
+    p.add_argument("--seed", type=int, default=2021)
     args = p.parse_args()
 
     os.makedirs(args.out_dir, exist_ok=True)

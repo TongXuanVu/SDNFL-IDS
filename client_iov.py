@@ -158,7 +158,7 @@ def main():
                    help="Dao dong trang thai controller moi round. 0 = giu co dinh "
                         "(mac dinh): trong so on dinh, tai lap duoc")
     p.add_argument("--task", type=int, default=None)
-    p.add_argument("--seed", type=int, default=42)
+    p.add_argument("--seed", type=int, default=2021)
     args = p.parse_args()
 
     C.setup_logging()
